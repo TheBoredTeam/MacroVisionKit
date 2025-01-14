@@ -18,7 +18,7 @@ Add the following dependency to your `Package.swift` file:
 
 ```swift
 dependencies: [
-    .package(url: "https://github.com/theboringhumane/MacroVisionKit.git", from: "1.0.0")
+    .package(url: "https://github.com/TheBoredTeam/MacroVisionKit.git", from: "0.0.0")
 ]
 ```
 
