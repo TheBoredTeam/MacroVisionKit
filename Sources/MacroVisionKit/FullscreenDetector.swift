@@ -73,22 +73,26 @@ public class MacroVisionKit {
         let screens = NSScreen.screens
         var fullscreenWindows: [FullscreenWindowInfo] = []
         
+        let mainScreenQuartzHeight = CGDisplayBounds(CGMainDisplayID()).height
+        
         if debug {
             print("🔬 [MacroVisionKit] Analyzing \(windowInfoList.count) on-screen windows...")
         }
         
         for windowInfo in windowInfoList {
-            guard let windowID = windowInfo[kCGWindowNumber as String] as? CGWindowID,
-                  let ownerPID = windowInfo[kCGWindowOwnerPID as String] as? pid_t,
-                  let ownerName = windowInfo[kCGWindowOwnerName as String] as? String,
+            guard let ownerPID = windowInfo[kCGWindowOwnerPID as String] as? pid_t,
                   let boundsDict = windowInfo[kCGWindowBounds as String] as? [String: CGFloat],
                   let windowFrame = CGRect(dictionaryRepresentation: boundsDict as CFDictionary),
-                  let alpha = windowInfo[kCGWindowAlpha as String] as? CGFloat else { continue }
-            guard alpha > 0 else { continue }
-            guard let screen = screens.first(where: { $0.frame.contains(windowFrame) }) else { continue }
+                  let alpha = windowInfo[kCGWindowAlpha as String] as? CGFloat, alpha > 0 else { continue }
+            
+            let appKitY = mainScreenQuartzHeight - windowFrame.origin.y - windowFrame.height
+            let appKitOrigin = CGPoint(x: windowFrame.origin.x, y: appKitY)
+            let appKitWindowFrame = CGRect(origin: appKitOrigin, size: windowFrame.size)
+            
+            guard let screen = screens.first(where: { $0.frame.contains(appKitWindowFrame) }) else { continue }
             let screenFrame = screen.frame
-            let sizeMatches = doesSizeMatchScreen(windowFrame: windowFrame, screenFrame: screenFrame)
-            let originMatches = doesOriginMatchScreen(windowFrame: windowFrame, screenFrame: screenFrame)
+            let sizeMatches = doesSizeMatchScreen(windowFrame: appKitWindowFrame, screenFrame: screenFrame)
+            let originMatches = doesOriginMatchScreen(windowFrame: appKitWindowFrame, screenFrame: screenFrame)
             
             if sizeMatches && originMatches {
                 guard let app = NSRunningApplication(processIdentifier: ownerPID) else { continue }
@@ -99,7 +103,7 @@ public class MacroVisionKit {
                 let info = FullscreenWindowInfo(
                     application: app,
                     screen: screen,
-                    windowFrame: windowFrame
+                    windowFrame: appKitWindowFrame
                 )
                 fullscreenWindows.append(info)
             }
