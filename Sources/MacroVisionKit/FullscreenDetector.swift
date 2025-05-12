@@ -69,7 +69,7 @@ public class MacroVisionKit {
     /// - Parameter debug: Enable diagnostic output for detailed analysis
     /// - Returns: Array of FullscreenAppInfo for detected viewport-maximized applications
     public func detectFullscreenApps(debug: Bool = false) -> [FullscreenWindowInfo] {
-        let windowInfoList = CGWindowListCopyWindowInfo([.optionOnScreenOnly], kCGNullWindowID) as? [[String: Any]] ?? []
+        let windowInfoList = CGWindowListCopyWindowInfo([.optionOnScreenOnly, .excludeDesktopElements], kCGNullWindowID) as? [[String: Any]] ?? []
         let screens = NSScreen.screens
         var fullscreenWindows: [FullscreenWindowInfo] = []
         
@@ -95,7 +95,7 @@ public class MacroVisionKit {
             let originMatches = doesOriginMatchScreen(windowFrame: appKitWindowFrame, screenFrame: screenFrame)
             
             if sizeMatches && originMatches {
-                guard let app = NSRunningApplication(processIdentifier: ownerPID) else { continue }
+                guard let app = NSRunningApplication(processIdentifier: ownerPID), app.bundleIdentifier != "com.apple.dock" else { continue }
                 if !configuration.includeSystemApps, app.bundleIdentifier?.hasPrefix("com.apple.") == true {
                     if debug { print("⏭️ Skipping system app: \(app.localizedName ?? "Unknown")") }
                     continue
