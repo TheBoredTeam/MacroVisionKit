@@ -90,10 +90,9 @@ public class MacroVisionKit {
             let appKitWindowFrame = CGRect(origin: appKitOrigin, size: windowFrame.size)
             
             guard let screen = screens.first(where: { $0.frame.contains(appKitWindowFrame) }) else { continue }
-            let screenFrame = screen.frame
-            let sizeMatches = doesSizeMatchScreen(windowFrame: appKitWindowFrame, screenFrame: screenFrame)
-            let originMatches = doesOriginMatchScreen(windowFrame: appKitWindowFrame, screenFrame: screenFrame)
-            
+            let safeFrame = screen.safeAreaFrame
+            let sizeMatches = doesSizeMatchScreen(windowFrame: appKitWindowFrame, screenFrame: safeFrame)
+            let originMatches = doesOriginMatchScreen(windowFrame: appKitWindowFrame, screenFrame: safeFrame)
             if sizeMatches && originMatches {
                 guard let app = NSRunningApplication(processIdentifier: ownerPID), app.bundleIdentifier != "com.apple.dock" else { continue }
                 if !configuration.includeSystemApps, app.bundleIdentifier?.hasPrefix("com.apple.") == true {
@@ -134,6 +133,26 @@ public class MacroVisionKit {
         let originMatchY = abs(windowFrame.origin.y - screenFrame.origin.y) < tolerance
 
         return originMatchX && originMatchY
+    }
+}
+
+// MARK: - NSScreen Safe Area Helper
+
+private extension NSScreen {
+    var safeAreaFrame: CGRect {
+        if #available(macOS 12.0, *) {
+            // Use safeAreaInsets if available (notch-aware)
+            let insets = self.safeAreaInsets
+            return CGRect(
+                x: self.frame.origin.x + insets.left,
+                y: self.frame.origin.y + insets.bottom,
+                width: self.frame.width - insets.left - insets.right,
+                height: self.frame.height - insets.top - insets.bottom
+            )
+        } else {
+            // Fallback for older macOS: no insets
+            return self.frame
+        }
     }
 }
 
