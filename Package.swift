@@ -10,9 +10,16 @@ let package = Package(
         .library(
             name: "MacroVisionKit",
             targets: ["MacroVisionKit"]),
+        .executable(
+            name: "FullScreenMonitorExample",
+            targets: ["FullScreenMonitorExample"]),
     ],
     targets: [
         .target(
             name: "MacroVisionKit"),
+        .executableTarget(
+            name: "FullScreenMonitorExample",
+            dependencies: ["MacroVisionKit"],
+            path: "Examples"),
     ]
 ) 
