@@ -18,7 +18,7 @@ Add the following dependency to your `Package.swift` file:
 
 ```swift
 dependencies: [
-    .package(url: "https://github.com/TheBoredTeam/MacroVisionKit.git", from: "0.0.0")
+    .package(url: "https://github.com/TheBoredTeam/MacroVisionKit.git", from: "0.2.0")
 ]
 ```
 
@@ -29,39 +29,54 @@ dependencies: [
 ```swift
 import MacroVisionKit
 
-// Initialize the detector
-let detector = MacroVisionKit.shared
-let fullscreenApps = detector.detectFullscreenApps()
+// Initialize the monitor
+let monitor = FullScreenMonitor.shared
+
+// Get current Full Screen apps
+let fullScreenApps = monitor.detectFullscreenApps()
 
 // Process detection results
-fullscreenApps.forEach { appInfo in
-    print(appInfo.debugDescription)
+fullScreenApps.forEach { spaceInfo in
+    print(spaceInfo.debugDescription)
 }
 ```
 
-### Advanced Configuration
+### Real-time Updates
+
+Use the `spaceChanges()` method to get an asynchronous stream of fullscreen space updates:
 
 ```swift
-// Configure detection parameters
-var config = MacroVisionKit.Configuration()
-config.sizeTolerance = 0.15 // 15% tolerance threshold
-config.includeSystemApps = true
+import MacroVisionKit
 
-// Apply configuration
-MacroVisionKit.shared.configuration = config
+// Get the stream of space changes
+let monitor = FullScreenMonitor.shared
+let stream = await monitor.spaceChanges()
+
+// Process updates asynchronously
+for await fullScreenSpaces in stream {
+    print("Fullscreen spaces updated: \(fullScreenSpaces.count)")
+    fullScreenSpaces.forEach { spaceInfo in
+        print(spaceInfo.debugDescription)
+    }
+}
 ```
 
-### Diagnostic Mode
+### Testing with the Example
 
-```swift
-// Enable diagnostic output for detailed analysis
-let fullscreenApps = detector.detectFullscreenApps(debug: true)
-```
+To test the framework, you can run the included example application. First, ensure you have Swift installed on your macOS system.
 
-## Technical Requirements
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/TheBoredTeam/MacroVisionKit.git
+   cd MacroVisionKit
+   ```
 
-- macOS 10.15 or later
-- Swift 5.0 or later
+2. Build and run the example:
+   ```bash
+   swift run FullScreenMonitorExample
+   ```
+
+3. The example will start monitoring for fullscreen space changes. Open some applications in fullscreen mode to see the detection in action. Press `Ctrl+C` to exit.
 
 ## License
 
